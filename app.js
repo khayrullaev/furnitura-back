@@ -2,6 +2,8 @@ const express = require("express");
 var mongoose = require("mongoose");
 var cookieParser = require("cookie-parser");
 var path = require("path");
+require("dotenv").config();
+var cors = require("cors");
 
 // Routes
 var apiRouter = require("./routes/api");
@@ -14,7 +16,7 @@ mongoose
   .then(() => {
     //don't show the log when it is test
     if (process.env.NODE_ENV !== "test") {
-      console.log("Connected to %s", MONGODB_URL);
+      console.log("Connected to Database");
       console.log("App is running ... \n");
     }
   })
@@ -31,8 +33,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+//To allow cross-origin requests
+app.use(cors());
+
 //Route Prefixes
 app.use("/", indexRouter);
 app.use("/api/", apiRouter);
 
-app.listen(5000);
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+  console.log("Listening to requests in port 5000");
+});
