@@ -7,20 +7,14 @@ const userSchema = new Schema({
     required: true,
     unique: true,
   },
-  accountId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   password: {
     type: String,
     required: true,
   },
-  fullName: {
+  name: {
     type: String,
     required: true,
   },
-
   address: {
     type: String,
     required: true,
@@ -29,6 +23,13 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  roles: [{ type: "String", enum: ["ADMIN", "USER"], default: ["USER"] }],
+  forgotPasswordOtp: Number,
+  forgotPasswordExpires: Date,
 });
 
 module.exports = mongoose.model("User", userSchema);
