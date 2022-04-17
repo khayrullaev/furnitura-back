@@ -1,3 +1,7 @@
+const signup = (req, res, next) => {
+  const { name, email, password, birthdate, address, phone } = req.body;
+};
+
 const login = (req, res, next) => {
   try {
     console.log("request to /login");
@@ -9,4 +13,5 @@ const login = (req, res, next) => {
 
 module.exports = {
   login,
+  signup,
 };

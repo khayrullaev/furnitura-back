@@ -15,6 +15,10 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  birthdate: {
+    type: Date,
+    required: true,
+  },
   address: {
     type: String,
     required: true,
@@ -22,6 +26,10 @@ const userSchema = new Schema({
   phone: {
     type: String,
     required: true,
+  },
+  profileImg: {
+    type: String,
+    required: false,
   },
   isVerified: {
     type: Boolean,
