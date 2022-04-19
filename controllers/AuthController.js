@@ -3,25 +3,16 @@ var response = require("../utils/response");
 const User = require("../models/User");
 const VerificationToken = require("../models/VerificationToken");
 const { generatePassword, validatePassword } = require("../utils/password");
-const { generateCryptoToken } = require("../utils/token");
+const { generateCryptoToken, signJwtToken } = require("../utils/token");
 const Mailer = require("../utils/mailer");
 const handlePromiseRequest = require("../utils/request");
+const { signupValidation } = require("../utils/validation/auth");
 
-const signup = async (req, res, next) => {
+const signup = async (req, res) => {
   const { body } = req;
-  const validationSchema = Joi.object({
-    email: Joi.string().email().required(),
-    name: Joi.string().required(),
-    password: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
-      .required(),
-    birthdate: Joi.string(),
-    address: Joi.string(),
-    phone: Joi.string().required(),
-  });
 
   // validate
-  const { value, error } = validationSchema.validate(body);
+  const { error } = signupValidation(body);
   if (!!error) {
     return response.validationErrorWithData(res, "ValidationFailed", error);
   }
@@ -69,7 +60,7 @@ const signup = async (req, res, next) => {
   return response.success(res, `Verification email is sent to ${body.email}`);
 };
 
-const confirmEmail = async (req, res, next) => {
+const confirmEmail = async (req, res) => {
   const { token } = req.params;
 
   // Find the matching verification token
@@ -102,7 +93,26 @@ const confirmEmail = async (req, res, next) => {
   });
 };
 
-const login = async (req, res, next) => {};
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user)
+    return response.invalidInput(res, "User with this email not found!");
+
+  if (!user.isVerified)
+    return response.unauthorized(res, "Your account has not been verified!");
+
+  const isEqual = await validatePassword(password, user.password);
+  if (!isEqual) return response.unauthorized(res, "Password is incorrect");
+
+  const accessToken = signJwtToken({
+    userId: user._id.toString(),
+    email: user.email,
+  });
+
+  return response.successWithData(res, "Success", { token: accessToken });
+};
 
 module.exports = {
   signup,
