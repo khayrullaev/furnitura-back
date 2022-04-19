@@ -1,9 +1,11 @@
 const Joi = require("joi");
 var response = require("../utils/response");
 const User = require("../models/User");
+const VerificationToken = require("../models/VerificationToken");
 const { generatePassword, validatePassword } = require("../utils/password");
 const { generateCryptoToken } = require("../utils/token");
 const Mailer = require("../utils/mailer");
+const handlePromiseRequest = require("../utils/request");
 
 const signup = async (req, res, next) => {
   const { body } = req;
@@ -34,28 +36,76 @@ const signup = async (req, res, next) => {
   const confirmationToken = generateCryptoToken();
   const html = `
   <div>Please verify your account by clicking the link below</div>
-  <div><a href="https://localhost:${process.env.PORT}/api/auth/email-confirmation/${confirmationToken}">Confirm email</a></div>
+  <div><a href="http://localhost:${process.env.PORT}/api/auth/email-confirmation/${confirmationToken}">Confirm email</a></div>
   `;
-  const emailResult = await Mailer.SendLocalMail(
-    body.email,
-    "Account Confirmation",
-    html
+  const [, emailError] = await handlePromiseRequest(
+    Mailer.SendLocalMail(body.email, "Account Confirmation", html)
   );
-
-  const hashedPw = generatePassword(body.password);
-  return response.successWithData(res, "Success", value);
-};
-
-const login = (req, res, next) => {
-  try {
-    console.log("request to /login");
-    return res.status(200).send({ code: 200, message: "nice man" });
-  } catch (error) {
-    next(error);
+  if (emailError) {
+    return response.error(
+      res,
+      "Error occured while sending an email to the user!"
+    );
   }
+
+  // save the user and token if email sending is successful
+  var newUser = new User({
+    email: body.email,
+    name: body.name,
+    birthdate: body.birthdate,
+    address: body.address,
+    phone: body.phone,
+    password: await generatePassword(body.password),
+  });
+
+  var newToken = new VerificationToken({
+    userId: newUser._id,
+    token: confirmationToken,
+  });
+
+  await newUser.save();
+  await newToken.save();
+
+  return response.success(res, `Verification email is sent to ${body.email}`);
 };
+
+const confirmEmail = async (req, res, next) => {
+  const { token } = req.params;
+
+  // Find the matching verification token
+  const tokenFound = await VerificationToken.findOne({ token });
+  if (!tokenFound) {
+    return response.error(
+      res,
+      "Unable to find a valid token. Your token my have expired!"
+    );
+  }
+
+  // If token is found, find the matching user
+  const user = await User.findOne({
+    _id: tokenFound.userId,
+  });
+  if (!user)
+    return response.error(res, "Unable to find a user for this token!");
+
+  if (user.isVerified)
+    return response.error(res, "This user has already been verified!");
+
+  // Verify and save the user
+  user.isVerified = true;
+  user.save((err) => {
+    if (err) return response.error(res, err.message);
+    return response.success(
+      res,
+      "The account has been verified. Please log in!"
+    );
+  });
+};
+
+const login = async (req, res, next) => {};
 
 module.exports = {
-  login,
   signup,
+  confirmEmail,
+  login,
 };
