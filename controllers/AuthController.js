@@ -6,7 +6,10 @@ const { generatePassword, validatePassword } = require("../utils/password");
 const { generateCryptoToken, signJwtToken } = require("../utils/token");
 const Mailer = require("../utils/mailer");
 const handlePromiseRequest = require("../utils/request");
-const { signupValidation } = require("../utils/validation/auth");
+const {
+  signupValidation,
+  loginValidation,
+} = require("../utils/validation/auth");
 
 const signup = async (req, res) => {
   const { body } = req;
@@ -94,6 +97,11 @@ const confirmEmail = async (req, res) => {
 };
 
 const login = async (req, res) => {
+  const { error } = loginValidation(req.body);
+  if (!!error) {
+    return response.validationErrorWithData(res, "ValidationFailed", error);
+  }
+
   const { email, password } = req.body;
   const user = await User.findOne({ email });
 
