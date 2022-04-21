@@ -124,6 +124,7 @@ const login = async (req, res) => {
 };
 
 const uploadTest = async (req, res) => {
+  console.log(req);
   const result = await uploader(req);
   console.log(result);
 
