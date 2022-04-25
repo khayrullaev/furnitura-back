@@ -1,6 +1,6 @@
 const cloudinary = require("cloudinary").v2;
-const path = require("path");
-const Datauri = require("datauri");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+var multer = require("multer");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -8,20 +8,12 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-const uploader = (req) => {
-  return new Promise((resolve, reject) => {
-    const dUri = new Datauri();
-    // let image = dUri.format(
-    //   path.extname(req.file.originalname || req.file.name).toString(),
-    //   req.file.buffer
-    // );
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "furnitura/users",
+  },
+});
+const upload = multer({ storage: storage });
 
-    // cloudinary.uploader.upload(image.content, (err, url) => {
-    //   if (err) return reject(err);
-    //   return resolve(url);
-    // });
-    resolve(1);
-  });
-};
-
-module.exports = uploader;
+module.exports = { upload };

@@ -1,4 +1,3 @@
-const Joi = require("joi");
 var response = require("../utils/response");
 const User = require("../models/User");
 const VerificationToken = require("../models/VerificationToken");
@@ -10,7 +9,6 @@ const {
   signupValidation,
   loginValidation,
 } = require("../utils/validation/auth");
-const uploader = require("../utils/uploader");
 
 const signup = async (req, res) => {
   const { body } = req;
@@ -123,17 +121,8 @@ const login = async (req, res) => {
   return response.successWithData(res, "Success", { token: accessToken });
 };
 
-const uploadTest = async (req, res) => {
-  console.log(req);
-  const result = await uploader(req);
-  console.log(result);
-
-  return response.success(res, "Success");
-};
-
 module.exports = {
   signup,
   confirmEmail,
   login,
-  uploadTest,
 };
