@@ -38,6 +38,26 @@ const userSchema = new Schema({
   roles: [{ type: "String", enum: ["ADMIN", "USER"], default: ["USER"] }],
   forgotPasswordOtp: Number,
   forgotPasswordExpires: Date,
+  likedProducts: [
+    {
+      productId: {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    },
+  ],
+  cart: {
+    items: [
+      {
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: { type: Number, required: true },
+      },
+    ],
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

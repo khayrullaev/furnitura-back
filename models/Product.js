@@ -31,7 +31,7 @@ const productSchema = new Schema({
   information: {
     size: String,
     material: String,
-    color: [String],
+    colors: [String],
   },
   imageUrl: {
     type: String,
