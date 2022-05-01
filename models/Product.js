@@ -17,7 +17,7 @@ const productSchema = new Schema({
   },
   isSale: {
     type: Boolean,
-    required: false,
+    required: true,
     default: false,
   },
   description: {
@@ -35,6 +35,10 @@ const productSchema = new Schema({
   },
   imageUrl: {
     type: String,
+    required: true,
+  },
+  category: {
+    type: "String",
     required: true,
   },
 });
