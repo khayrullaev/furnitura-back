@@ -82,7 +82,10 @@ const confirmEmail = async (req, res) => {
     return response.error(res, "Unable to find a user for this token!");
 
   if (user.isVerified)
-    return response.error(res, "This user has already been verified!");
+    return response.error(
+      res,
+      "This user has already been verified! Please log in!"
+    );
 
   // Verify and save the user
   user.isVerified = true;
