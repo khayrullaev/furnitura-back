@@ -1,65 +1,96 @@
-var response = require("../utils/response");
+const formidable = require("formidable");
+const path = require("path");
+const fs = require("fs");
+
+// models
 const User = require("../models/User");
 const VerificationToken = require("../models/VerificationToken");
-const { generatePassword, validatePassword } = require("../utils/password");
-const { generateCryptoToken, signJwtToken } = require("../utils/token");
+
+// utils
+var response = require("../utils/response");
+const { uploader } = require("../utils/uploader");
 const Mailer = require("../utils/mailer");
 const handlePromiseRequest = require("../utils/request");
+const { generatePassword, validatePassword } = require("../utils/password");
+const { generateCryptoToken, signJwtToken } = require("../utils/token");
 const {
   signupValidation,
   loginValidation,
 } = require("../utils/validation/auth");
 
 const signup = async (req, res) => {
-  const { body } = req;
+  const uploadDirectory = path.join(__dirname, "../Uploads");
+  const form = new formidable.IncomingForm();
+  form.uploadDir = uploadDirectory;
+  form.keepExtensions = true;
+  form.multiples = true;
 
-  // validate
-  const { error } = signupValidation(body);
-  if (!!error) {
-    return response.validationErrorWithData(res, "ValidationFailed", error);
-  }
+  form.parse(req, async (err, fields, files) => {
+    // validate
+    const { error } = signupValidation(fields);
+    if (!!error) {
+      return response.validationErrorWithData(res, "ValidationFailed", error);
+    }
 
-  // check for existing user
-  const existingUser = await User.findOne({ email: body.email });
-  if (existingUser) {
-    return response.invalidInput(res, "User already exists");
-  }
+    // check for existing user
+    const existingUser = await User.findOne({ email: fields.email });
+    if (existingUser) {
+      return response.invalidInput(res, "User already exists");
+    }
 
-  // create token and send email
-  const confirmationToken = generateCryptoToken();
-  const html = `
-  <div>Please verify your account by clicking the link below</div>
-  <div><a href="http://localhost:${process.env.PORT}/api/auth/email-confirmation/${confirmationToken}">Confirm email</a></div>
-  `;
-  const [, emailError] = await handlePromiseRequest(
-    Mailer.SendLocalMail(body.email, "Account Confirmation", html)
-  );
-  if (emailError) {
-    return response.error(
-      res,
-      "Error occured while sending an email to the user!"
+    // create token and send email
+    const confirmationToken = generateCryptoToken();
+    const html = `
+    <div>Please verify your account by clicking the link below</div>
+    <div><a href="http://localhost:${process.env.PORT}/api/auth/email-confirmation/${confirmationToken}">Confirm email</a></div>
+    `;
+    const [, emailError] = await handlePromiseRequest(
+      Mailer.SendLocalMail(fields.email, "Account Confirmation", html)
     );
-  }
+    if (emailError) {
+      return response.error(
+        res,
+        "Error occured while sending an email to the user!"
+      );
+    }
 
-  // save the user and token if email sending is successful
-  var newUser = new User({
-    email: body.email,
-    name: body.name,
-    birthdate: body.birthdate,
-    address: body.address,
-    phone: body.phone,
-    password: await generatePassword(body.password),
+    // // save the user and token if email sending is successful
+    const profileImg = await uploader(files["profileImg"]);
+    var newUser = new User({
+      email: fields.email,
+      name: fields.name,
+      birthdate: fields.birthdate,
+      address: fields.address,
+      phone: fields.phone,
+      password: await generatePassword(fields.password),
+      profileImg: profileImg || {
+        url: "",
+        publicId: "",
+      },
+    });
+
+    var newToken = new VerificationToken({
+      userId: newUser._id,
+      token: confirmationToken,
+    });
+
+    await newUser.save();
+    await newToken.save();
+
+    fs.unlink(files["profileImg"].filepath, (err) => {
+      if (err)
+        console.error(
+          "Error occured while trying to remove/unlink a file from disk: ",
+          err
+        );
+      console.log(`${files["profileImg"].filepath} has been deleted.`);
+    });
+
+    return response.success(
+      res,
+      `Verification email is sent to ${fields.email}`
+    );
   });
-
-  var newToken = new VerificationToken({
-    userId: newUser._id,
-    token: confirmationToken,
-  });
-
-  await newUser.save();
-  await newToken.save();
-
-  return response.success(res, `Verification email is sent to ${body.email}`);
 };
 
 const confirmEmail = async (req, res) => {
@@ -99,6 +130,7 @@ const confirmEmail = async (req, res) => {
 };
 
 const login = async (req, res) => {
+  // validate
   const { error } = loginValidation(req.body);
   if (!!error) {
     return response.validationErrorWithData(res, "ValidationFailed", error);

@@ -28,8 +28,8 @@ const userSchema = new Schema({
     required: true,
   },
   profileImg: {
-    type: String,
-    required: false,
+    url: String,
+    publicId: String,
   },
   isVerified: {
     type: Boolean,
