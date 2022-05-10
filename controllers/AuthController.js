@@ -1,6 +1,7 @@
 const formidable = require("formidable");
 const path = require("path");
 const fs = require("fs");
+const rn = require("random-number");
 
 // models
 const User = require("../models/User");
@@ -16,6 +17,8 @@ const { generateCryptoToken, signJwtToken } = require("../utils/token");
 const {
   signupValidation,
   loginValidation,
+  emailValidation,
+  resetPasswordValidation,
 } = require("../utils/validation/auth");
 
 const signup = async (req, res) => {
@@ -156,8 +159,94 @@ const login = async (req, res) => {
   return response.successWithData(res, "Success", { token: accessToken });
 };
 
+const forgotPassword = async (req, res) => {
+  // validate
+  const { error } = emailValidation(req.body);
+  if (!!error) {
+    return response.validationErrorWithData(res, "ValidationFailed", error);
+  }
+
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user)
+    return response.invalidInput(res, "User with this email not found!");
+
+  if (!user.isVerified)
+    return response.unauthorized(res, "Your account has not been verified!");
+
+  // create random # and send email
+  const passwordResetOtp = rn({
+    min: 1000,
+    max: 9999,
+    integer: true,
+  });
+  const html = `
+   <div>You requested a password reset</div>
+   <p>Here is a 4 digit unique key: ${passwordResetOtp}</p>
+   `;
+  const [, emailError] = await handlePromiseRequest(
+    Mailer.SendLocalMail(email, "Password Reset Number", html)
+  );
+  if (emailError) {
+    return response.error(
+      res,
+      "Error occured while sending an email to the user!"
+    );
+  }
+
+  user.passwordResetOtp = passwordResetOtp;
+  user.passwordResetExpires = Date.now() + 36000000;
+  await user.save();
+
+  return response.successWithData(
+    res,
+    `Unique key is sent to your email at ${email}`,
+    {
+      userId: user._id.toString(),
+    }
+  );
+};
+
+const resetPassword = async (req, res) => {
+  // validate
+  const { error } = resetPasswordValidation(req.body);
+  if (!!error) {
+    return response.validationErrorWithData(
+      res,
+      "ValidationFailed: Please send a valid email",
+      error
+    );
+  }
+
+  const { password, userId, otp } = req.body;
+  const user = await User.findOne({
+    _id: userId,
+    passwordResetOTP: otp,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user)
+    return response.invalidInput(
+      res,
+      "User not found or Unique Key is Expired!"
+    );
+
+  user.password = await generatePassword(password);
+  user.passwordResetOTP = null;
+  user.passwordResetExpires = null;
+  await user.save();
+
+  return response.success(
+    res,
+    "Successfully reset the password. Please log in!"
+  );
+};
+
 module.exports = {
   signup,
   confirmEmail,
   login,
+  forgotPassword,
+  resetPassword,
 };

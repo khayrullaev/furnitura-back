@@ -24,7 +24,28 @@ const loginValidation = (data) => {
   return schema.validate(data);
 };
 
+const emailValidation = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+  });
+  return schema.validate(data);
+};
+
+const resetPasswordValidation = (data) => {
+  const schema = Joi.object({
+    userId: Joi.string(),
+    password: Joi.string()
+      .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+      .required(),
+    otp: Joi.number().integer().min(1000).max(9999),
+  });
+
+  return schema.validate(data);
+};
+
 module.exports = {
   signupValidation,
   loginValidation,
+  emailValidation,
+  resetPasswordValidation,
 };
