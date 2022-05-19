@@ -7,12 +7,12 @@ exports.success = (res, msg) => {
 };
 
 exports.successWithData = (res, msg, data) => {
-  var resData = {
+  var data = {
     status: 1,
     message: msg,
     data: data,
   };
-  return res.status(200).json(resData);
+  return res.status(200).json(data);
 };
 
 exports.error = (res, msg) => {
@@ -32,12 +32,12 @@ exports.notFound = (res, msg) => {
 };
 
 exports.validationErrorWithData = (res, msg, data) => {
-  var resData = {
+  var data = {
     status: 0,
     message: msg,
     data: data,
   };
-  return res.status(400).json(resData);
+  return res.status(400).json(data);
 };
 
 exports.unauthorized = (res, msg) => {
