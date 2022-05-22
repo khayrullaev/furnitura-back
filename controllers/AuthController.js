@@ -22,78 +22,52 @@ const {
 } = require("../utils/validation/auth");
 
 const signup = async (req, res) => {
-  const uploadDirectory = path.join(__dirname, "../Uploads");
-  const form = new formidable.IncomingForm();
-  form.uploadDir = uploadDirectory;
-  form.keepExtensions = true;
-  form.multiples = true;
+  const { body } = req;
 
-  form.parse(req, async (err, fields, files) => {
-    // validate
-    const { error } = signupValidation(fields);
-    if (!!error) {
-      return response.validationErrorWithData(res, "ValidationFailed", error);
-    }
+  // validate
+  const { error } = signupValidation(body);
+  if (!!error) {
+    return response.validationErrorWithData(res, "ValidationFailed", error);
+  }
 
-    // check for existing user
-    const existingUser = await User.findOne({ email: fields.email });
-    if (existingUser) {
-      return response.invalidInput(res, "User already exists");
-    }
+  // check for existing user
+  const existingUser = await User.findOne({ email: body.email });
+  if (existingUser) {
+    return response.invalidInput(res, "User already exists");
+  }
 
-    // create token and send email
-    const confirmationToken = generateCryptoToken();
-    const html = `
+  // create token and send email
+  const confirmationToken = generateCryptoToken();
+  const html = `
     <div>Please verify your account by clicking the link below</div>
     <div><a href="http://localhost:${process.env.PORT}/api/auth/email-confirmation/${confirmationToken}">Confirm email</a></div>
     `;
-    const [, emailError] = await handlePromiseRequest(
-      Mailer.SendLocalMail(fields.email, "Account Confirmation", html)
-    );
-    if (emailError) {
-      return response.error(
-        res,
-        "Error occured while sending an email to the user!"
-      );
-    }
-
-    // // save the user and token if email sending is successful
-    const profileImg = await uploader(files["profileImg"]);
-    var newUser = new User({
-      email: fields.email,
-      name: fields.name,
-      birthdate: fields.birthdate,
-      address: fields.address,
-      phone: fields.phone,
-      password: await generatePassword(fields.password),
-      profileImg: profileImg || {
-        url: "",
-        publicId: "",
-      },
-    });
-
-    var newToken = new VerificationToken({
-      userId: newUser._id,
-      token: confirmationToken,
-    });
-
-    await newUser.save();
-    await newToken.save();
-
-    fs.unlink(files["profileImg"].filepath, (err) => {
-      if (err)
-        console.error(
-          "Error occured while trying to remove/unlink a file from disk: ",
-          err
-        );
-      console.log(`${files["profileImg"].filepath} has been deleted.`);
-    });
-
-    return response.success(
+  const [, emailError] = await handlePromiseRequest(
+    Mailer.SendLocalMail(body.email, "Account Confirmation", html)
+  );
+  if (emailError) {
+    return response.error(
       res,
-      `Verification email is sent to ${fields.email}`
+      "Error occured while sending an email to the user!"
     );
+  }
+
+  // save the user and token if email sending is successful
+  var newUser = new User({
+    email: body.email,
+    name: body.name,
+    password: await generatePassword(body.password),
   });
+
+  var newToken = new VerificationToken({
+    userId: newUser._id,
+    token: confirmationToken,
+  });
+
+  await newUser.save();
+  await newToken.save();
+
+  return response.success(res, `Verification email is sent to ${body.email}`);
 };
 
 const confirmEmail = async (req, res) => {
@@ -182,7 +156,7 @@ const forgotPassword = async (req, res) => {
     integer: true,
   });
   const html = `
-   <div>You requested a password reset</div>
+   <div>You requested a password reset.</div>
    <p>Here is a 4 digit unique key: ${passwordResetOtp}</p>
    `;
   const [, emailError] = await handlePromiseRequest(
