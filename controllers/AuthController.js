@@ -9,7 +9,6 @@ const VerificationToken = require("../models/VerificationToken");
 
 // utils
 var response = require("../utils/response");
-const { uploader } = require("../utils/uploader");
 const Mailer = require("../utils/mailer");
 const handlePromiseRequest = require("../utils/request");
 const { generatePassword, validatePassword } = require("../utils/password");

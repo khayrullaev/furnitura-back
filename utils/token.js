@@ -13,7 +13,12 @@ const signJwtToken = (info) => {
   });
 };
 
+const validateJWT = (token) => {
+  return jwt.verify(token, process.env.TOKEN_SECRET);
+};
+
 module.exports = {
   generateCryptoToken,
   signJwtToken,
+  validateJWT,
 };

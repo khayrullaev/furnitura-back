@@ -44,8 +44,13 @@ app.listen(PORT, () => {
 
 // DB connection
 var MONGODB_URL = process.env.MONGODB_URL;
+var DB_NAME = process.env.DB_NAME;
 mongoose
-  .connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(MONGODB_URL, {
+    dbName: DB_NAME,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     //don't show the log when it is test
     if (process.env.NODE_ENV !== "test") {
