@@ -1,6 +1,7 @@
 var response = require("../utils/response");
-const seedData = require("../constants/seed_products");
+const { seedData, collectionsSeedData } = require("../constants/seed_products");
 const Product = require("../models/Product");
+const Collections = require("../models/Collections");
 
 const uploadTest = async (req, res) => {
   console.log(req.file);
@@ -32,7 +33,28 @@ const insertSeedData = async (req, res) => {
   });
 };
 
+const insertCollectionsSeedData = async (req, res) => {
+  for (const collection of collectionsSeedData) {
+    console.log(`  🛍️ Adding collection: ${collection.title}`);
+    var newCollection = new Collections({
+      ...collection,
+    });
+    await newCollection.save();
+  }
+  console.log(`✅ Seed Data Inserted: ${seedData.length} Collections`);
+  console.log(
+    `👋 Please start the process with \`yarn dev\` or \`npm run dev\``
+  );
+
+  const insertedCollections = await Collections.find();
+
+  return response.successWithData(res, "Success", {
+    insertedCollections,
+  });
+};
+
 module.exports = {
   uploadTest,
   insertSeedData,
+  insertCollectionsSeedData,
 };

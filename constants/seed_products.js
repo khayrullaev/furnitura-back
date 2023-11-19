@@ -312,4 +312,28 @@ const seedData = [
   },
 ];
 
-module.exports = seedData;
+const collectionsSeedData = [
+  {
+    title: "LC collection",
+    description:
+      "From the process of searching and full of enthusiasm, the designers of Nha Xinh Furniture have created a lot of furniture collections in different styles. Behind it, there are stories of passion, creativity and inspiration from colorful life, Discover!",
+    date: "05.06.2020",
+    views: 0,
+  },
+  {
+    title: "LC collection",
+    description:
+      "From the process of searching and full of enthusiasm, the designers of Nha Xinh Furniture have created a lot of furniture collections in different styles. Behind it, there are stories of passion, creativity and inspiration from colorful life, Discover!",
+    date: "10.07.2020",
+    views: 0,
+  },
+  {
+    title: "Rattan collection",
+    description:
+      "The Rattan Collection recalls the peaceful and close memories of Vietnamese soul...",
+    date: "12.11.2020",
+    views: 0,
+  },
+];
+
+module.exports = { seedData, collectionsSeedData };
