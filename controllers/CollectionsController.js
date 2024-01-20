@@ -5,8 +5,6 @@ const getList = async (req, res, next) => {
   try {
     const collections = await Collections.aggregate().sample(5);
 
-    console.log(collections);
-
     return response.successWithData(res, "Success", {
       collections,
     });

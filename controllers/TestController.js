@@ -4,10 +4,6 @@ const Product = require("../models/Product");
 const Collections = require("../models/Collections");
 
 const uploadTest = async (req, res) => {
-  console.log(req.file);
-  //   const result = await uploader(req);
-  //   console.log(result);
-
   return response.successWithData(res, "Success", {
     fileUrl: req.file.filename,
   });

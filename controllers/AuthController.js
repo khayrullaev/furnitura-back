@@ -182,19 +182,20 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  // validate
   const { error } = resetPasswordValidation(req.body);
+
   if (!!error) {
     return response.validationErrorWithData(
       res,
-      "ValidationFailed: Please send a valid email",
+      "ValidationFailed: Please send a valid password and OTP",
       error
     );
   }
 
-  const { password, userId, otp } = req.body;
+  const { email, password, otp } = req.body;
+
   const user = await User.findOne({
-    _id: userId,
+    email,
     passwordResetOTP: otp,
     passwordResetExpires: { $gt: Date.now() },
   });

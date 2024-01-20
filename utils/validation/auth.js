@@ -30,7 +30,7 @@ const emailValidation = (data) => {
 
 const resetPasswordValidation = (data) => {
   const schema = Joi.object({
-    userId: Joi.string(),
+    email: Joi.string(),
     password: Joi.string()
       .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
       .required(),
