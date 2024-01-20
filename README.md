@@ -12,10 +12,10 @@
 
 ## Features
 
-* Email Sign Up
+* Sign Up
 * Email Confirmation
-* Email Login
-* Forget Password
+* Login
+* Forget Password - with OTP
 * Reset Password
 * Store / Products / Profile queries
 * Create Orders
